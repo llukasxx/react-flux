@@ -1,6 +1,6 @@
 # React with Flux
 
-This is React with flux test app followed by pluralsight 'Building Applications with React and Flux' tutorial.
+This is React with flux test app followed by pluralsight 'Building Applications with React and Flux' tutorial with es6 addition.
 
 ##To get started:  
 1. Install [NodeJS](http://www.nodejs.org)  
