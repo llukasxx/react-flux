@@ -44288,24 +44288,16 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Authors = function (_React$Component) {
-  _inherits(Authors, _React$Component);
+var AuthorList = function (_React$Component) {
+  _inherits(AuthorList, _React$Component);
 
-  function Authors(props) {
-    _classCallCheck(this, Authors);
+  function AuthorList(props) {
+    _classCallCheck(this, AuthorList);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Authors).call(this, props));
-
-    _this.state = { authors: [] };
-    return _this;
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(AuthorList).call(this, props));
   }
 
-  _createClass(Authors, [{
-    key: 'componentWillMount',
-    value: function componentWillMount() {
-      this.setState({ authors: _authorApi2.default.getAllAuthors() });
-    }
-  }, {
+  _createClass(AuthorList, [{
     key: 'render',
     value: function render() {
       var createAuthorRow = function createAuthorRow(author) {
@@ -44334,11 +44326,6 @@ var Authors = function (_React$Component) {
         'div',
         null,
         _react2.default.createElement(
-          'h1',
-          null,
-          'Authors'
-        ),
-        _react2.default.createElement(
           'table',
           { className: 'table' },
           _react2.default.createElement(
@@ -44358,19 +44345,85 @@ var Authors = function (_React$Component) {
           _react2.default.createElement(
             'tbody',
             null,
-            this.state.authors.map(createAuthorRow, this)
+            this.props.authors.map(createAuthorRow, this)
           )
         )
       );
     }
   }]);
 
-  return Authors;
+  return AuthorList;
 }(_react2.default.Component);
 
-exports.default = Authors;
+AuthorList.propTypes = {
+  authors: _react2.default.PropTypes.array.isRequired
+};
+
+exports.default = AuthorList;
 
 },{"../../api/authorApi":159,"react":158}],163:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _authorApi = require('../../api/authorApi');
+
+var _authorApi2 = _interopRequireDefault(_authorApi);
+
+var _authorList = require('./authorList');
+
+var _authorList2 = _interopRequireDefault(_authorList);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var AuthorPage = function (_React$Component) {
+  _inherits(AuthorPage, _React$Component);
+
+  function AuthorPage(props) {
+    _classCallCheck(this, AuthorPage);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(AuthorPage).call(this, props));
+
+    _this.state = { authors: _authorApi2.default.getAllAuthors() };
+    return _this;
+  }
+
+  _createClass(AuthorPage, [{
+    key: 'render',
+    value: function render() {
+      return _react2.default.createElement(
+        'div',
+        null,
+        _react2.default.createElement(
+          'h1',
+          null,
+          'Authors'
+        ),
+        _react2.default.createElement(_authorList2.default, { authors: this.state.authors })
+      );
+    }
+  }]);
+
+  return AuthorPage;
+}(_react2.default.Component);
+
+exports.default = AuthorPage;
+
+},{"../../api/authorApi":159,"./authorList":162,"react":158}],164:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -44455,7 +44508,7 @@ var Header = function (_React$Component) {
 
 exports.default = Header;
 
-},{"react":158}],164:[function(require,module,exports){
+},{"react":158}],165:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -44501,7 +44554,7 @@ var Home = function (_React$Component) {
 
 exports.default = Home;
 
-},{"react":158}],165:[function(require,module,exports){
+},{"react":158}],166:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -44564,4 +44617,4 @@ var App = function (_React$Component) {
 
 _react2.default.render(_react2.default.createElement(App, null), document.getElementById('app'));
 
-},{"./components/about/aboutPage":161,"./components/authors/authorPage":162,"./components/common/header":163,"./components/homePage":164,"jquery":2,"react":158}]},{},[165]);
+},{"./components/about/aboutPage":161,"./components/authors/authorPage":163,"./components/common/header":164,"./components/homePage":165,"jquery":2,"react":158}]},{},[166]);
