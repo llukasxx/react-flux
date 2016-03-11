@@ -47604,6 +47604,76 @@ exports.default = Home;
 },{"react":197,"react-router":28}],206:[function(require,module,exports){
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactRouter = require('react-router');
+
+var _reactRouter2 = _interopRequireDefault(_reactRouter);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Link = _reactRouter2.default.Link;
+
+var NotFoundPage = function (_React$Component) {
+  _inherits(NotFoundPage, _React$Component);
+
+  function NotFoundPage(props) {
+    _classCallCheck(this, NotFoundPage);
+
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(NotFoundPage).call(this, props));
+  }
+
+  _createClass(NotFoundPage, [{
+    key: 'render',
+    value: function render() {
+      return _react2.default.createElement(
+        'div',
+        null,
+        _react2.default.createElement(
+          'h1',
+          null,
+          'Page not found'
+        ),
+        _react2.default.createElement(
+          'p',
+          null,
+          'Whoops! Sorry, there is noting to see there'
+        ),
+        _react2.default.createElement(
+          'p',
+          null,
+          _react2.default.createElement(
+            Link,
+            { to: 'app' },
+            'Back to home'
+          )
+        )
+      );
+    }
+  }]);
+
+  return NotFoundPage;
+}(_react2.default.Component);
+
+exports.default = NotFoundPage;
+
+},{"react":197,"react-router":28}],207:[function(require,module,exports){
+"use strict";
+
 var _react = require('react');
 
 var _react2 = _interopRequireDefault(_react);
@@ -47622,7 +47692,7 @@ _reactRouter2.default.run(_routes2.default, function (Handler) {
   _react2.default.render(_react2.default.createElement(Handler, null), document.getElementById('app'));
 });
 
-},{"./routes":207,"react":197,"react-router":28}],207:[function(require,module,exports){
+},{"./routes":208,"react":197,"react-router":28}],208:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47653,19 +47723,25 @@ var _aboutPage = require('./components/about/aboutPage');
 
 var _aboutPage2 = _interopRequireDefault(_aboutPage);
 
+var _notFoundPage = require('./components/notFoundPage');
+
+var _notFoundPage2 = _interopRequireDefault(_notFoundPage);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var DefaultRoute = _reactRouter2.default.DefaultRoute;
 var Route = _reactRouter2.default.Route;
+var NotFoundRoute = _reactRouter2.default.NotFoundRoute;
 
 var routes = _react2.default.createElement(
   Route,
   { name: 'app', path: '/', handler: _app2.default },
   _react2.default.createElement(DefaultRoute, { handler: _homePage2.default }),
   _react2.default.createElement(Route, { name: 'authors', handler: _authorPage2.default }),
-  _react2.default.createElement(Route, { name: 'about', handler: _aboutPage2.default })
+  _react2.default.createElement(Route, { name: 'about', handler: _aboutPage2.default }),
+  _react2.default.createElement(NotFoundRoute, { handler: _notFoundPage2.default })
 );
 
 exports.default = routes;
 
-},{"./components/about/aboutPage":200,"./components/app":201,"./components/authors/authorPage":203,"./components/homePage":205,"react":197,"react-router":28}]},{},[206]);
+},{"./components/about/aboutPage":200,"./components/app":201,"./components/authors/authorPage":203,"./components/homePage":205,"./components/notFoundPage":206,"react":197,"react-router":28}]},{},[207]);
