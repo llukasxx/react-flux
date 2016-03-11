@@ -47212,6 +47212,22 @@ var About = function (_React$Component) {
         )
       );
     }
+  }], [{
+    key: "willTransitionTo",
+    value: function willTransitionTo(transition, params, query, callback) {
+      if (!confirm("Are you sure you want to read this page?")) {
+        transition.abort();
+      } else {
+        callback();
+      }
+    }
+  }, {
+    key: "willTransitionFrom",
+    value: function willTransitionFrom(transition, component) {
+      if (!confirm("Are you sure you want to leave this page?")) {
+        transition.abort();
+      }
+    }
   }]);
 
   return About;
@@ -47688,7 +47704,7 @@ var _routes2 = _interopRequireDefault(_routes);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_reactRouter2.default.run(_routes2.default, function (Handler) {
+_reactRouter2.default.run(_routes2.default, _reactRouter2.default.HistoryLocation, function (Handler) {
   _react2.default.render(_react2.default.createElement(Handler, null), document.getElementById('app'));
 });
 
