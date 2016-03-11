@@ -1,6 +1,9 @@
 "use strict";
 
 import React from 'react';
+import Router from 'react-router';
+
+let Link = Router.Link;
 
 class Header extends React.Component {
   constructor(props) {
@@ -10,13 +13,13 @@ class Header extends React.Component {
     return (
       <nav className="navbar navbar-default">
         <div className="container-fluid">
-          <a href="/" className="navbar-brand">
+          <Link to="app" className="navbar-brand">
             <img src="images/pluralsight-logo.png" width="20"/>
-          </a>
+          </Link>
           <ul className="nav navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/#about">About</a></li>
-            <li><a href="/#authors">Authors</a></li>
+            <li><Link to="app">Home</Link></li>
+            <li><Link to="authors">Authors</Link></li>
+            <li><Link to="about">About</Link></li>
           </ul>
         </div>
       </nav>
