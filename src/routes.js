@@ -11,6 +11,7 @@ import NotFoundPage from './components/notFoundPage';
 let DefaultRoute = Router.DefaultRoute;
 let Route = Router.Route;
 let NotFoundRoute = Router.NotFoundRoute;
+let Redirect = Router.Redirect;
 
 let routes = (
   <Route name="app" path="/" handler={App}>
@@ -18,6 +19,8 @@ let routes = (
     <Route name="authors" handler={AuthorPage} />
     <Route name="about" handler={About} />
     <NotFoundRoute handler={NotFoundPage} />
+    <Redirect from="about-us" to="about" />
+    <Redirect from="about/*" to="about" />
   </Route>
 );
 

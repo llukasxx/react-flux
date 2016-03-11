@@ -47732,6 +47732,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var DefaultRoute = _reactRouter2.default.DefaultRoute;
 var Route = _reactRouter2.default.Route;
 var NotFoundRoute = _reactRouter2.default.NotFoundRoute;
+var Redirect = _reactRouter2.default.Redirect;
 
 var routes = _react2.default.createElement(
   Route,
@@ -47739,7 +47740,9 @@ var routes = _react2.default.createElement(
   _react2.default.createElement(DefaultRoute, { handler: _homePage2.default }),
   _react2.default.createElement(Route, { name: 'authors', handler: _authorPage2.default }),
   _react2.default.createElement(Route, { name: 'about', handler: _aboutPage2.default }),
-  _react2.default.createElement(NotFoundRoute, { handler: _notFoundPage2.default })
+  _react2.default.createElement(NotFoundRoute, { handler: _notFoundPage2.default }),
+  _react2.default.createElement(Redirect, { from: 'about-us', to: 'about' }),
+  _react2.default.createElement(Redirect, { from: 'about/*', to: 'about' })
 );
 
 exports.default = routes;
