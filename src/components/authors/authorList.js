@@ -1,7 +1,9 @@
 "use strict";
 
 import React from 'react';
-import AuthorApi from '../../api/authorApi';
+import Router from 'react-router';
+
+let Link = Router.Link;
 
 class AuthorList extends React.Component {
   constructor(props) {
@@ -12,7 +14,7 @@ class AuthorList extends React.Component {
     let createAuthorRow = function(author) {
       return (
         <tr key={author.id}>
-          <td><a href={"/#authors/" + author.id}>{author.id}</a></td>
+          <td><Link to="manageAuthor" params={{id: author.id}}>{author.id}</Link></td>
           <td>{author.firstName} {author.lastName}</td>
         </tr>
       );

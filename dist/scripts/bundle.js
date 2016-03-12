@@ -47054,6 +47054,382 @@ module.exports = warning;
 module.exports = require('./lib/React');
 
 },{"./lib/React":70}],198:[function(require,module,exports){
+/*
+ * Toastr
+ * Copyright 2012-2014 
+ * Authors: John Papa, Hans Fjällemark, and Tim Ferrell.
+ * All Rights Reserved.
+ * Use, reproduction, distribution, and modification of this code is subject to the terms and
+ * conditions of the MIT license, available at http://www.opensource.org/licenses/mit-license.php
+ *
+ * ARIA Support: Greta Krafsig
+ *
+ * Project: https://github.com/CodeSeven/toastr
+ */
+; (function (define) {
+    define(['jquery'], function ($) {
+        return (function () {
+            var $container;
+            var listener;
+            var toastId = 0;
+            var toastType = {
+                error: 'error',
+                info: 'info',
+                success: 'success',
+                warning: 'warning'
+            };
+
+            var toastr = {
+                clear: clear,
+                remove: remove,
+                error: error,
+                getContainer: getContainer,
+                info: info,
+                options: {},
+                subscribe: subscribe,
+                success: success,
+                version: '2.1.0',
+                warning: warning
+            };
+
+            var previousToast;
+
+            return toastr;
+
+            //#region Accessible Methods
+            function error(message, title, optionsOverride) {
+                return notify({
+                    type: toastType.error,
+                    iconClass: getOptions().iconClasses.error,
+                    message: message,
+                    optionsOverride: optionsOverride,
+                    title: title
+                });
+            }
+
+            function getContainer(options, create) {
+                if (!options) { options = getOptions(); }
+                $container = $('#' + options.containerId);
+                if ($container.length) {
+                    return $container;
+                }
+                if (create) {
+                    $container = createContainer(options);
+                }
+                return $container;
+            }
+
+            function info(message, title, optionsOverride) {
+                return notify({
+                    type: toastType.info,
+                    iconClass: getOptions().iconClasses.info,
+                    message: message,
+                    optionsOverride: optionsOverride,
+                    title: title
+                });
+            }
+
+            function subscribe(callback) {
+                listener = callback;
+            }
+
+            function success(message, title, optionsOverride) {
+                return notify({
+                    type: toastType.success,
+                    iconClass: getOptions().iconClasses.success,
+                    message: message,
+                    optionsOverride: optionsOverride,
+                    title: title
+                });
+            }
+
+            function warning(message, title, optionsOverride) {
+                return notify({
+                    type: toastType.warning,
+                    iconClass: getOptions().iconClasses.warning,
+                    message: message,
+                    optionsOverride: optionsOverride,
+                    title: title
+                });
+            }
+
+            function clear($toastElement) {
+                var options = getOptions();
+                if (!$container) { getContainer(options); }
+                if (!clearToast($toastElement, options)) {
+                    clearContainer(options);
+                }
+            }
+
+            function remove($toastElement) {
+                var options = getOptions();
+                if (!$container) { getContainer(options); }
+                if ($toastElement && $(':focus', $toastElement).length === 0) {
+                    removeToast($toastElement);
+                    return;
+                }
+                if ($container.children().length) {
+                    $container.remove();
+                }
+            }
+            //#endregion
+
+            //#region Internal Methods
+
+            function clearContainer (options) {
+                var toastsToClear = $container.children();
+                for (var i = toastsToClear.length - 1; i >= 0; i--) {
+                    clearToast($(toastsToClear[i]), options);
+                }
+            }
+
+            function clearToast ($toastElement, options) {
+                if ($toastElement && $(':focus', $toastElement).length === 0) {
+                    $toastElement[options.hideMethod]({
+                        duration: options.hideDuration,
+                        easing: options.hideEasing,
+                        complete: function () { removeToast($toastElement); }
+                    });
+                    return true;
+                }
+                return false;
+            }
+
+            function createContainer(options) {
+                $container = $('<div/>')
+                    .attr('id', options.containerId)
+                    .addClass(options.positionClass)
+                    .attr('aria-live', 'polite')
+                    .attr('role', 'alert');
+
+                $container.appendTo($(options.target));
+                return $container;
+            }
+
+            function getDefaults() {
+                return {
+                    tapToDismiss: true,
+                    toastClass: 'toast',
+                    containerId: 'toast-container',
+                    debug: false,
+
+                    showMethod: 'fadeIn', //fadeIn, slideDown, and show are built into jQuery
+                    showDuration: 300,
+                    showEasing: 'swing', //swing and linear are built into jQuery
+                    onShown: undefined,
+                    hideMethod: 'fadeOut',
+                    hideDuration: 1000,
+                    hideEasing: 'swing',
+                    onHidden: undefined,
+
+                    extendedTimeOut: 1000,
+                    iconClasses: {
+                        error: 'toast-error',
+                        info: 'toast-info',
+                        success: 'toast-success',
+                        warning: 'toast-warning'
+                    },
+                    iconClass: 'toast-info',
+                    positionClass: 'toast-top-right',
+                    timeOut: 5000, // Set timeOut and extendedTimeOut to 0 to make it sticky
+                    titleClass: 'toast-title',
+                    messageClass: 'toast-message',
+                    target: 'body',
+                    closeHtml: '<button>&times;</button>',
+                    newestOnTop: true,
+                    preventDuplicates: false,
+                    progressBar: false
+                };
+            }
+
+            function publish(args) {
+                if (!listener) { return; }
+                listener(args);
+            }
+
+            function notify(map) {
+                var options = getOptions(),
+                    iconClass = map.iconClass || options.iconClass;
+
+                if (options.preventDuplicates) {
+                    if (map.message === previousToast) {
+                        return;
+                    } else {
+                        previousToast = map.message;
+                    }
+                }
+
+                if (typeof (map.optionsOverride) !== 'undefined') {
+                    options = $.extend(options, map.optionsOverride);
+                    iconClass = map.optionsOverride.iconClass || iconClass;
+                }
+
+                toastId++;
+
+                $container = getContainer(options, true);
+                var intervalId = null,
+                    $toastElement = $('<div/>'),
+                    $titleElement = $('<div/>'),
+                    $messageElement = $('<div/>'),
+                    $progressElement = $('<div/>'),
+                    $closeElement = $(options.closeHtml),
+                    progressBar = {
+                        intervalId: null,
+                        hideEta: null,
+                        maxHideTime: null
+                    },
+                    response = {
+                        toastId: toastId,
+                        state: 'visible',
+                        startTime: new Date(),
+                        options: options,
+                        map: map
+                    };
+
+                if (map.iconClass) {
+                    $toastElement.addClass(options.toastClass).addClass(iconClass);
+                }
+
+                if (map.title) {
+                    $titleElement.append(map.title).addClass(options.titleClass);
+                    $toastElement.append($titleElement);
+                }
+
+                if (map.message) {
+                    $messageElement.append(map.message).addClass(options.messageClass);
+                    $toastElement.append($messageElement);
+                }
+
+                if (options.closeButton) {
+                    $closeElement.addClass('toast-close-button').attr('role', 'button');
+                    $toastElement.prepend($closeElement);
+                }
+
+                if (options.progressBar) {
+                    $progressElement.addClass('toast-progress');
+                    $toastElement.prepend($progressElement);
+                }
+
+                $toastElement.hide();
+                if (options.newestOnTop) {
+                    $container.prepend($toastElement);
+                } else {
+                    $container.append($toastElement);
+                }
+                $toastElement[options.showMethod](
+                    {duration: options.showDuration, easing: options.showEasing, complete: options.onShown}
+                );
+
+                if (options.timeOut > 0) {
+                    intervalId = setTimeout(hideToast, options.timeOut);
+                    progressBar.maxHideTime = parseFloat(options.timeOut);
+                    progressBar.hideEta = new Date().getTime() + progressBar.maxHideTime;
+                    if (options.progressBar) {
+                        progressBar.intervalId = setInterval(updateProgress, 10);
+                    }
+                }
+
+                $toastElement.hover(stickAround, delayedHideToast);
+                if (!options.onclick && options.tapToDismiss) {
+                    $toastElement.click(hideToast);
+                }
+
+                if (options.closeButton && $closeElement) {
+                    $closeElement.click(function (event) {
+                        if (event.stopPropagation) {
+                            event.stopPropagation();
+                        } else if (event.cancelBubble !== undefined && event.cancelBubble !== true) {
+                            event.cancelBubble = true;
+                        }
+                        hideToast(true);
+                    });
+                }
+
+                if (options.onclick) {
+                    $toastElement.click(function () {
+                        options.onclick();
+                        hideToast();
+                    });
+                }
+
+                publish(response);
+
+                if (options.debug && console) {
+                    console.log(response);
+                }
+
+                return $toastElement;
+
+                function hideToast(override) {
+                    if ($(':focus', $toastElement).length && !override) {
+                        return;
+                    }
+                    clearTimeout(progressBar.intervalId);
+                    return $toastElement[options.hideMethod]({
+                        duration: options.hideDuration,
+                        easing: options.hideEasing,
+                        complete: function () {
+                            removeToast($toastElement);
+                            if (options.onHidden && response.state !== 'hidden') {
+                                options.onHidden();
+                            }
+                            response.state = 'hidden';
+                            response.endTime = new Date();
+                            publish(response);
+                        }
+                    });
+                }
+
+                function delayedHideToast() {
+                    if (options.timeOut > 0 || options.extendedTimeOut > 0) {
+                        intervalId = setTimeout(hideToast, options.extendedTimeOut);
+                        progressBar.maxHideTime = parseFloat(options.extendedTimeOut);
+                        progressBar.hideEta = new Date().getTime() + progressBar.maxHideTime;
+                    }
+                }
+
+                function stickAround() {
+                    clearTimeout(intervalId);
+                    progressBar.hideEta = 0;
+                    $toastElement.stop(true, true)[options.showMethod](
+                        {duration: options.showDuration, easing: options.showEasing}
+                    );
+                }
+
+                function updateProgress() {
+                    var percentage = ((progressBar.hideEta - (new Date().getTime())) / progressBar.maxHideTime) * 100;
+                    $progressElement.width(percentage + '%');
+                }
+            }
+
+            function getOptions() {
+                return $.extend({}, getDefaults(), toastr.options);
+            }
+
+            function removeToast($toastElement) {
+                if (!$container) { $container = getContainer(); }
+                if ($toastElement.is(':visible')) {
+                    return;
+                }
+                $toastElement.remove();
+                $toastElement = null;
+                if ($container.children().length === 0) {
+                    $container.remove();
+                }
+            }
+            //#endregion
+
+        })();
+    });
+}(typeof define === 'function' && define.amd ? define : function (deps, factory) {
+    if (typeof module !== 'undefined' && module.exports) { //Node
+        module.exports = factory(require('jquery'));
+    } else {
+        window['toastr'] = factory(window['jQuery']);
+    }
+}));
+
+},{"jquery":2}],199:[function(require,module,exports){
 "use strict";
 
 //This file is mocking a web API by hitting hard coded data.
@@ -47106,7 +47482,7 @@ var AuthorApi = {
 
 module.exports = AuthorApi;
 
-},{"./authorData":199,"lodash":3}],199:[function(require,module,exports){
+},{"./authorData":200,"lodash":3}],200:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -47125,7 +47501,7 @@ module.exports = {
   }]
 };
 
-},{}],200:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47235,7 +47611,7 @@ var About = function (_React$Component) {
 
 exports.default = About;
 
-},{"react":197}],201:[function(require,module,exports){
+},{"react":197}],202:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -47300,7 +47676,7 @@ var App = function (_React$Component) {
 
 exports.default = App;
 
-},{"./common/header":204,"jquery":2,"react":197,"react-router":28}],202:[function(require,module,exports){
+},{"./common/header":207,"jquery":2,"react":197,"react-router":28}],203:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47313,9 +47689,9 @@ var _react = require('react');
 
 var _react2 = _interopRequireDefault(_react);
 
-var _authorApi = require('../../api/authorApi');
+var _textInput = require('../common/textInput');
 
-var _authorApi2 = _interopRequireDefault(_authorApi);
+var _textInput2 = _interopRequireDefault(_textInput);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -47324,6 +47700,75 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var AuthorForm = function (_React$Component) {
+  _inherits(AuthorForm, _React$Component);
+
+  function AuthorForm(props) {
+    _classCallCheck(this, AuthorForm);
+
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(AuthorForm).call(this, props));
+  }
+
+  _createClass(AuthorForm, [{
+    key: 'render',
+    value: function render() {
+      return _react2.default.createElement(
+        'form',
+        null,
+        _react2.default.createElement(
+          'h1',
+          null,
+          'Manage Author'
+        ),
+        _react2.default.createElement(_textInput2.default, {
+          name: 'firstName',
+          label: 'First Name',
+          value: this.props.author.firstName,
+          onChange: this.props.onChange,
+          error: this.props.errors.firstName }),
+        _react2.default.createElement(_textInput2.default, {
+          name: 'lastName',
+          label: 'Last Name',
+          value: this.props.author.lastName,
+          onChange: this.props.onChange,
+          error: this.props.errors.lastName }),
+        _react2.default.createElement('input', { type: 'submit', value: 'Save', className: 'btn btn-default', onClick: this.props.onSave })
+      );
+    }
+  }]);
+
+  return AuthorForm;
+}(_react2.default.Component);
+
+exports.default = AuthorForm;
+
+},{"../common/textInput":208,"react":197}],204:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactRouter = require('react-router');
+
+var _reactRouter2 = _interopRequireDefault(_reactRouter);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Link = _reactRouter2.default.Link;
 
 var AuthorList = function (_React$Component) {
   _inherits(AuthorList, _React$Component);
@@ -47345,8 +47790,8 @@ var AuthorList = function (_React$Component) {
             'td',
             null,
             _react2.default.createElement(
-              'a',
-              { href: "/#authors/" + author.id },
+              Link,
+              { to: 'manageAuthor', params: { id: author.id } },
               author.id
             )
           ),
@@ -47398,7 +47843,7 @@ AuthorList.propTypes = {
 
 exports.default = AuthorList;
 
-},{"../../api/authorApi":198,"react":197}],203:[function(require,module,exports){
+},{"react":197,"react-router":28}],205:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47419,6 +47864,14 @@ var _authorList = require('./authorList');
 
 var _authorList2 = _interopRequireDefault(_authorList);
 
+var _manageAuthorPage = require('./manageAuthorPage');
+
+var _manageAuthorPage2 = _interopRequireDefault(_manageAuthorPage);
+
+var _reactRouter = require('react-router');
+
+var _reactRouter2 = _interopRequireDefault(_reactRouter);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -47426,6 +47879,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Link = _reactRouter2.default.Link;
 
 var AuthorPage = function (_React$Component) {
   _inherits(AuthorPage, _React$Component);
@@ -47450,6 +47905,11 @@ var AuthorPage = function (_React$Component) {
           null,
           'Authors'
         ),
+        _react2.default.createElement(
+          Link,
+          { to: 'addAuthor', className: 'btn btn-default' },
+          'Add author'
+        ),
         _react2.default.createElement(_authorList2.default, { authors: this.state.authors })
       );
     }
@@ -47460,7 +47920,143 @@ var AuthorPage = function (_React$Component) {
 
 exports.default = AuthorPage;
 
-},{"../../api/authorApi":198,"./authorList":202,"react":197}],204:[function(require,module,exports){
+},{"../../api/authorApi":199,"./authorList":204,"./manageAuthorPage":206,"react":197,"react-router":28}],206:[function(require,module,exports){
+'use strict';
+"use srtict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactRouter = require('react-router');
+
+var _reactRouter2 = _interopRequireDefault(_reactRouter);
+
+var _authorForm = require('./authorForm');
+
+var _authorForm2 = _interopRequireDefault(_authorForm);
+
+var _authorApi = require('../../api/authorApi');
+
+var _authorApi2 = _interopRequireDefault(_authorApi);
+
+var _toastr = require('toastr');
+
+var _toastr2 = _interopRequireDefault(_toastr);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ManageAuthorPage = function (_React$Component) {
+  _inherits(ManageAuthorPage, _React$Component);
+
+  function ManageAuthorPage(props) {
+    _classCallCheck(this, ManageAuthorPage);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ManageAuthorPage).call(this, props));
+
+    _this.state = {
+      author: { id: '', firstName: '', lastName: '' },
+      errors: {},
+      dirty: false
+    };
+
+    _this.setAuthorState = _this.setAuthorState.bind(_this);
+    _this.saveAuthor = _this.saveAuthor.bind(_this);
+    return _this;
+  }
+
+  _createClass(ManageAuthorPage, [{
+    key: 'setAuthorState',
+    value: function setAuthorState(event) {
+      this.setState({ dirty: true });
+      var field = event.target.name;
+      var value = event.target.value;
+      this.state.author[field] = value;
+      this.setState({ author: this.state.author });
+    }
+  }, {
+    key: 'authorFormIsValid',
+    value: function authorFormIsValid() {
+      var formIsValid = true;
+      this.state.errors = {};
+
+      if (this.state.author.firstName.length < 3) {
+        this.state.errors.firstName = 'First name must be at least 3 characters.';
+        formIsValid = false;
+      }
+      if (this.state.author.lastName.length < 3) {
+        this.state.errors.lastName = 'Last name must be at least 3 characters.';
+        formIsValid = false;
+      }
+      this.setState({ errors: this.state.errors });
+
+      return formIsValid;
+    }
+  }, {
+    key: 'saveAuthor',
+    value: function saveAuthor(event) {
+      event.preventDefault();
+      if (!this.authorFormIsValid()) {
+        return;
+      }
+      _authorApi2.default.saveAuthor(this.state.author);
+      this.setState({ dirty: false });
+      _toastr2.default.success('Author ' + this.state.author.firstName + ' ' + this.state.author.lastName + ' saved.');
+      this.context.router.transitionTo('/authors');
+    }
+  }, {
+    key: 'componentWillMount',
+    value: function componentWillMount() {
+      var authorId = this.props.params.id;
+      if (authorId) {
+        this.setState({ author: _authorApi2.default.getAuthorById(authorId) });
+      }
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      return _react2.default.createElement(
+        'div',
+        null,
+        _react2.default.createElement(_authorForm2.default, {
+          author: this.state.author,
+          onChange: this.setAuthorState,
+          onSave: this.saveAuthor,
+          errors: this.state.errors
+        })
+      );
+    }
+  }], [{
+    key: 'willTransitionFrom',
+    value: function willTransitionFrom(transition, component) {
+      if (component.state.dirty && !confirm('Leave without saving?')) {
+        transition.abort();
+      }
+    }
+  }]);
+
+  return ManageAuthorPage;
+}(_react2.default.Component);
+
+ManageAuthorPage.contextTypes = {
+  router: _react2.default.PropTypes.func.isRequired
+};
+
+exports.default = ManageAuthorPage;
+
+},{"../../api/authorApi":199,"./authorForm":203,"react":197,"react-router":28,"toastr":198}],207:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47551,7 +48147,87 @@ var Header = function (_React$Component) {
 
 exports.default = Header;
 
-},{"react":197,"react-router":28}],205:[function(require,module,exports){
+},{"react":197,"react-router":28}],208:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Input = function (_React$Component) {
+  _inherits(Input, _React$Component);
+
+  function Input(props) {
+    _classCallCheck(this, Input);
+
+    return _possibleConstructorReturn(this, Object.getPrototypeOf(Input).call(this, props));
+  }
+
+  _createClass(Input, [{
+    key: 'render',
+    value: function render() {
+      var wrapperClass = 'form-group';
+      if (this.props.error && this.props.error.length > 0) {
+        wrapperClass += " " + 'has-error';
+      }
+
+      return _react2.default.createElement(
+        'div',
+        { className: wrapperClass },
+        _react2.default.createElement(
+          'label',
+          { htmlFor: this.props.name },
+          this.props.label
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'field' },
+          _react2.default.createElement('input', { type: 'text',
+            name: this.props.name,
+            className: 'form-control',
+            placeholder: this.props.placeholder,
+            ref: this.props.name,
+            value: this.props.value,
+            onChange: this.props.onChange }),
+          _react2.default.createElement(
+            'div',
+            { className: 'input' },
+            this.props.error
+          )
+        )
+      );
+    }
+  }]);
+
+  return Input;
+}(_react2.default.Component);
+
+Input.propTypes = {
+  name: _react2.default.PropTypes.string.isRequired,
+  label: _react2.default.PropTypes.string.isRequired,
+  onChange: _react2.default.PropTypes.func.isRequired,
+  placeholder: _react2.default.PropTypes.string,
+  value: _react2.default.PropTypes.string,
+  error: _react2.default.PropTypes.string
+};
+
+exports.default = Input;
+
+},{"react":197}],209:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -47617,7 +48293,7 @@ var Home = function (_React$Component) {
 
 exports.default = Home;
 
-},{"react":197,"react-router":28}],206:[function(require,module,exports){
+},{"react":197,"react-router":28}],210:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47687,7 +48363,7 @@ var NotFoundPage = function (_React$Component) {
 
 exports.default = NotFoundPage;
 
-},{"react":197,"react-router":28}],207:[function(require,module,exports){
+},{"react":197,"react-router":28}],211:[function(require,module,exports){
 "use strict";
 
 var _react = require('react');
@@ -47704,11 +48380,11 @@ var _routes2 = _interopRequireDefault(_routes);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_reactRouter2.default.run(_routes2.default, _reactRouter2.default.HistoryLocation, function (Handler) {
+_reactRouter2.default.run(_routes2.default, function (Handler) {
   _react2.default.render(_react2.default.createElement(Handler, null), document.getElementById('app'));
 });
 
-},{"./routes":208,"react":197,"react-router":28}],208:[function(require,module,exports){
+},{"./routes":212,"react":197,"react-router":28}],212:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -47735,6 +48411,10 @@ var _authorPage = require('./components/authors/authorPage');
 
 var _authorPage2 = _interopRequireDefault(_authorPage);
 
+var _manageAuthorPage = require('./components/authors/manageAuthorPage');
+
+var _manageAuthorPage2 = _interopRequireDefault(_manageAuthorPage);
+
 var _aboutPage = require('./components/about/aboutPage');
 
 var _aboutPage2 = _interopRequireDefault(_aboutPage);
@@ -47755,6 +48435,8 @@ var routes = _react2.default.createElement(
   { name: 'app', path: '/', handler: _app2.default },
   _react2.default.createElement(DefaultRoute, { handler: _homePage2.default }),
   _react2.default.createElement(Route, { name: 'authors', handler: _authorPage2.default }),
+  _react2.default.createElement(Route, { name: 'addAuthor', path: 'author', handler: _manageAuthorPage2.default }),
+  _react2.default.createElement(Route, { name: 'manageAuthor', path: 'author/:id', handler: _manageAuthorPage2.default }),
   _react2.default.createElement(Route, { name: 'about', handler: _aboutPage2.default }),
   _react2.default.createElement(NotFoundRoute, { handler: _notFoundPage2.default }),
   _react2.default.createElement(Redirect, { from: 'about-us', to: 'about' }),
@@ -47763,4 +48445,4 @@ var routes = _react2.default.createElement(
 
 exports.default = routes;
 
-},{"./components/about/aboutPage":200,"./components/app":201,"./components/authors/authorPage":203,"./components/homePage":205,"./components/notFoundPage":206,"react":197,"react-router":28}]},{},[207]);
+},{"./components/about/aboutPage":201,"./components/app":202,"./components/authors/authorPage":205,"./components/authors/manageAuthorPage":206,"./components/homePage":209,"./components/notFoundPage":210,"react":197,"react-router":28}]},{},[211]);
