@@ -3,7 +3,8 @@
 import React from 'react';
 import Router from 'react-router';
 import AuthorForm from './authorForm';
-import AuthorApi from '../../api/authorApi';
+import AuthorActions from '../../actions/authorActions';
+import AuthorStore from '../../stores/authorStore';
 import toastr from 'toastr';
 
 class ManageAuthorPage extends React.Component {
@@ -51,7 +52,11 @@ class ManageAuthorPage extends React.Component {
     if(!this.authorFormIsValid()) {
       return;
     }
-    AuthorApi.saveAuthor(this.state.author);
+    if(this.state.author.id) {
+      AuthorActions.updateAuthor(this.state.author);
+    } else {
+      AuthorActions.createAuthor(this.state.author);
+    }
     this.setState({dirty: false});
     toastr.success(`Author ${this.state.author.firstName} ${this.state.author.lastName} saved.`);
     this.context.router.transitionTo('/authors');
@@ -59,7 +64,7 @@ class ManageAuthorPage extends React.Component {
   componentWillMount() {
     let authorId = this.props.params.id;
     if (authorId) {
-      this.setState({author: AuthorApi.getAuthorById(authorId)});
+      this.setState({author: AuthorStore.getAuthorById(authorId)});
     }
   }
   render() {
